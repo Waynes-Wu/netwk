@@ -49,19 +49,31 @@ def join():
     return
 
 
-# def leave():
-    # success_message = 'Connection closed. Thank you!'
-    # print(success_message)
+def leave():
+    success_message = 'Connection closed. Thank you!'
+    tempDict = {"command":"leave"}
 
-# def register():
-#     success_message = f'Welcome {handle}!'
-#     pass
-# def send_all():
-#     success_message = f'{handle}: {message}'
-#     pass
-# def send_handle():
-#     success_message = f'[To {receiver}] : {message}'
-#     pass
+    response = sendJSON(tempDict)
+    CLIENTSOCKET.close()
+    print(success_message)
+    return
+
+def register():
+    global USERHANDLE
+    USERHANDLE = INPSPLIT[1]
+    success_message = f'Welcome {USERHANDLE}!'
+    tempDict = {"command":"register", "handle": INPSPLIT[1]}
+    return
+
+def send_all():
+    # success_message = f'{handle}: {message}'
+    tempDict = {"command":"all", "message": INPSPLIT[1]}
+    pass
+
+def send_handle():
+    # success_message = f'[To {receiver}] : {message}'
+    tempDict = {"command":"msg", "handle":INPSPLIT[1], "message":INPSPLIT[2]}    
+    pass
 
 def help():
     print(
@@ -105,26 +117,18 @@ while True:
     tempDict = {}
     if INPSPLIT[0] == '/join':
         join()
-        tempDict = {"command":"join"}
 
     elif INPSPLIT[0] == '/leave':
-        # leave()
-        tempDict = {"command":"leave"}
-        sendJSON(tempDict)
+        leave()
 
     elif INPSPLIT[0] == '/register':
-        # register()
-        tempDict = {"command":"register", "handle": INPSPLIT[1]}
-
+        register()
 
     elif INPSPLIT[0] == '/all':
-        # send_all()
-        tempDict = {"command":"all", "message": INPSPLIT[1]}
-
+        send_all()
+        
     elif INPSPLIT[0] == '/msg':
-        # send_handle()
-        tempDict = {"command":"msg", "handle":INPSPLIT[1], 
-        "message":INPSPLIT[2]}
+        send_handle()
 
 
     elif INPSPLIT[0] == '/?':
@@ -134,7 +138,7 @@ while True:
 
 
 
-    # expect and print out status of command
+# expect and print out status of command
 
 # msgFromClient       = "Hello UDP Server"
 
@@ -144,23 +148,13 @@ while True:
 
 # bufferSize          = 1024
 
-
-
 # # Create a UDP socket at client side
-
 # UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
-
-
 # # Send to server using created UDP socket
-
 # UDPClientSocket.sendto(bytesToSend, serverAddressPort)
 
-
-
 # msgFromServer = UDPClientSocket.recvfrom(bufferSize)
-
-
 
 # msg = "Message from Server {}".format(msgFromServer[0])
 
