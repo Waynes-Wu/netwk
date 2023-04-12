@@ -1,106 +1,102 @@
 import socket
 import json
 
+# ! -------------------------------------------------------------
+def sendJSON(dictionary):
+    json_str = json.dumps(dictionary)
+    SERVERSOCKET.sendto(json_str.encode(), serverAddressPort)
+# ! -------------------------------------------------------------
 
 serverAddressPort = ("127.0.0.1", 2000)
 bufferSize = 1024
 
-
-msgFromServer = "Hello UDP Client"
-
-
 SERVERSOCKET = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 SERVERSOCKET.bind(serverAddressPort)
-
-
-def sendJSON(dictionary):
-    json_str = json.dumps(dictionary)
-    SERVERSOCKET.sendto(json_str.encode(), serverAddressPort)
 
 print("UDP server up and listening")
 print(f'opening a server in {serverAddressPort}')
 
+# ! -------------------------------------------------------------
 clients = {}
 while (True):
 
-    success = False
+    statusReturn = {'message' : ''}
 
-    receivingMsg = SERVERSOCKET.recvfrom(bufferSize)
-    print(f'connected -- {receivingMsg[1]}')
-    port = receivingMsg[1][1]
+    receivingMsg, address = SERVERSOCKET.recvfrom(bufferSize)
+    print(f'client {address} has sent a message')
+    
+    # we will be referring to client ass port, since this is localhost
+    port = address[1]
 
-    commandingMsg = json.loads(receivingMsg[0].decode())
+    cmdDict = json.loads(receivingMsg.decode())
 
-    command = commandingMsg.get('command')
-    # ! -- join
+    command = cmdDict.get('command')
+    # ! -- join  --------------------
     if command == 'join':
-        try:
+        a = clients.get(port)
+        if a == None:
             clients[port] = ''
-            success = True
-        except:
-            success == False
         print('new client joined')
-        print('  ', clients)
+        statusReturn['message'] = 'Connection to the Message Board Server is successful!'
 
-    # ! -- leave
+    # ! -- leave -------------------
     if command == 'leave':
         del (clients[port])
-        success = True
-        print()
+        print('removed a client')
+        statusReturn['message'] = 'Connection closed. Thank you!'
 
-
-    # ! -- register
+    # ! -- register ----------------
     if command == 'register':
-        newHandle = commandingMsg.get('handle')
+        newHandle = cmdDict.get('handle')
 
-        # false by default
-
-        if clients.get(port) is not None and newHandle != None:
+        # conditions here is if it's not taken
+        if clients.get(port) == '':
             clients[port] = newHandle
-            success = True
+            statusReturn['message'] = f'Welcome {newHandle}!'
 
-    # ! -- send all
+    # ! -- send all  --------------
     if command == 'all':
-        message = commandingMsg.get('message')
-        try:
-            for key in clients.keys():
-                SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", key))
-            success = True
-        except:
-            success = False
+        message = cmdDict.get('message')
+        sender = clients.get(port)
+
+        message = f'{sender} : {message}'
+
+        for key in clients.keys():
+            if key == port:
+                continue
+            SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", key))
+            statusReturn['message'] = f'[To all] : {message}'
+
 
     # ! -- send to handle
     if command == 'msg':
-        message = commandingMsg.get('message')
-        handle = commandingMsg.get('handle')
+        message = cmdDict.get('message')
+        handle = cmdDict.get('handle')
+        sender = clients.get(port)
+        sent = False
+        for key, value in clients.items():
+            if (value == handle) and (key != port):
 
-        try:
-            for key, value in clients.items():
-                if (value == handle) and (key != port):
+                message = f'[From {sender} : {message}]'
+
+                try:
                     SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", "127.0.0.1", key))
-            success = True
-        except:
-            success = False
+                    sent = True
+                except:
+                    pass
 
-    # send back to sender
-    status_dict = {}
-    status_dict['status'] = success
-    status_dict = json.dumps(status_dict)
+        # good message
+        if sent:
+            statusReturn['message'] = f'[To {value}] : {message}'
 
-    SERVERSOCKET.sendto(status_dict.encode(), receivingMsg[1])
+
+
+
+    statusReturn = json.dumps(statusReturn)
+    SERVERSOCKET.sendto(statusReturn.encode(), address)
 
     
-    if (len(clients) == 0):
-        break
+    # if (len(clients) == 0):
+    #     break
 SERVERSOCKET.close()
 
-
-
-# data.get('status')
-
-    # global PROMISE
-    # global RESPONSE
-    
-    # while not PROMISE:
-    #     continue
-    # PROMISE = False
