@@ -54,11 +54,13 @@ while (True):
             success = True
         except:
             success == False
-    print(clients)
+        print('new client joined')
+        print('  ', clients)
 
     # ! -- leave
     if command == 'leave':
         del (clients[port])
+
 
     # ! -- register
     if command == 'register':
@@ -81,8 +83,20 @@ while (True):
         message = commandingMsg.get('message')
         handle = commandingMsg.get('handle')
 
-        for key, value in clients.items():
-            if value == handle:
-                SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", key))
-    break
+        try:
+            for key, value in clients.items():
+                if (value == handle) and (key != port):
+                    SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", "127.0.0.1", key))
+            success = True
+        except:
+            success = False
+
+    # send back to sender
+    status_dict = {}
+    status_dict['status'] = success
+    status_dict = json.dumps(status_dict)
+    SERVERSOCKET.sendto(status_dict.encode(), receivingMsg[1])
+
+    if (len(clients) == 0):
+        break
 SERVERSOCKET.close()

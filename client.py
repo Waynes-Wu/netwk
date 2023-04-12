@@ -5,21 +5,28 @@ import json
 USERINPUT = ''
 INPSPLIT = []
 HANDLE = None
-
-# serverAddressPort = ('localhost', 2000)
+THREAD = True
 serverAddressPort = None
 CLIENTSOCKET = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 bufferSize = 1024
 # * ---------------FUNCTIONS-------------
-def clear():
-    os.system('cls')
+
+# def clear():
+#     os.system('cls')
 
 def sendJSON(dictionary):
     json_str = json.dumps(dictionary)
     CLIENTSOCKET.sendto(json_str.encode(), serverAddressPort)
+    global THREAD
+    THREAD = False
 
-    # response = CLIENTSOCKET.recv(1024).decode()
-    # return response
+    response = CLIENTSOCKET.recv(1024).decode()
+
+    data = json.loads(response)
+
+    THREAD = True
+
+    return data.get('status')
 
 def askCommand():
     a = input('>>> ')
@@ -41,11 +48,14 @@ def join():
     serverAddressPort= (INPSPLIT[1], int(INPSPLIT[2]))
     try:
         CLIENTSOCKET.connect(serverAddressPort)
-        print(success_message)
     except Exception as e:
         print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
     
     response = sendJSON(tempDict)
+
+    if response:
+        print(success_message)
+
     return
 
 def leave():
@@ -95,8 +105,16 @@ def help():
 import threading
 def receive_messages():
     while True:
-        data = CLIENTSOCKET.recvfrom(1024)
-        print(data[0].decode())
+        if THREAD:
+            data = CLIENTSOCKET.recvfrom(1024)
+            data = json.loads(data[0].decode())
+
+            if data.get('command') == 'message':
+                # {message: message, sender: handle}
+                message = data.get('message')
+                sender = data.get('sender')
+                print(f'from {sender}: {message}')
+
 
 receive_thread = threading.Thread(target=receive_messages)
 
@@ -168,3 +186,4 @@ while True:
 # msg = "Message from Server {}".format(msgFromServer[0])
 
 # print(msg)
+
