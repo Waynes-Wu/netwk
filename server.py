@@ -46,6 +46,7 @@ while (True):
     if command == 'leave':
         del (clients[port])
         success = True
+        print()
 
 
     # ! -- register
@@ -85,8 +86,21 @@ while (True):
     status_dict = {}
     status_dict['status'] = success
     status_dict = json.dumps(status_dict)
+
     SERVERSOCKET.sendto(status_dict.encode(), receivingMsg[1])
 
+    
     if (len(clients) == 0):
         break
 SERVERSOCKET.close()
+
+
+
+# data.get('status')
+
+    # global PROMISE
+    # global RESPONSE
+    
+    # while not PROMISE:
+    #     continue
+    # PROMISE = False

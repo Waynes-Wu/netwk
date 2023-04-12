@@ -9,6 +9,10 @@ THREAD = True
 serverAddressPort = None
 CLIENTSOCKET = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 bufferSize = 1024
+
+# have no gotten = false
+PROMISE = False
+RESPONSE = ''
 # * ---------------FUNCTIONS-------------
 
 # def clear():
@@ -17,16 +21,7 @@ bufferSize = 1024
 def sendJSON(dictionary):
     json_str = json.dumps(dictionary)
     CLIENTSOCKET.sendto(json_str.encode(), serverAddressPort)
-    global THREAD
-    THREAD = False
-
-    response = CLIENTSOCKET.recv(1024).decode()
-
-    data = json.loads(response)
-
-    THREAD = True
-
-    return data.get('status')
+    return
 
 def askCommand():
     a = input('>>> ')
@@ -56,16 +51,21 @@ def join():
         print('Error: Command parameters do not match or is not allowed.')
         return
 
-
     try:
         CLIENTSOCKET.connect(serverAddressPort)
     except Exception as e:
         serverAddressPort = None
         print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
     
-    response = sendJSON(tempDict)
+    sendJSON(tempDict)
+    global PROMISE
+    global RESPONSE
+    global THREAD
+    while not PROMISE:
+        continue
+    PROMISE = False
 
-    if response:
+    if RESPONSE:
         print(success_message)
 
     return
@@ -85,8 +85,16 @@ def leave():
     success_message = 'Connection closed. Thank you!'
     tempDict = {"command":"leave"}
 
-    response = sendJSON(tempDict)
-    if response:
+    sendJSON(tempDict)
+
+    global PROMISE
+    global RESPONSE
+    
+    while not PROMISE:
+        continue
+    PROMISE = False
+
+    if RESPONSE:
         serverAddressPort = None
         print(success_message)
     return
@@ -110,8 +118,16 @@ def register():
     success_message = f'Welcome {HANDLE}!'
 
 
-    response = sendJSON(tempDict)
-    if response:
+    sendJSON(tempDict)
+
+    global PROMISE
+    global RESPONSE
+    
+    while not PROMISE:
+        continue
+    PROMISE = False
+
+    if RESPONSE:
         print(success_message)
     else: 
         print('Error: Registration failed. Handle or alias already exists.')
@@ -121,7 +137,6 @@ def register():
 # ! -- send all
 def send_all():
     global serverAddressPort 
-    message = INPSPLIT[1]
 
     if len(INPSPLIT) != 2:
         print('Error: Command parameters do not match or is not allowed.')
@@ -137,11 +152,19 @@ def send_all():
         print('Error: Please register before sending a message.')
         return
 
+    message = INPSPLIT[1]
     success_message = f'{HANDLE}: {message}'
     tempDict = {"command":"all", "message": INPSPLIT[1]}
-    response = sendJSON(tempDict)   
+    sendJSON(tempDict)   
 
-    if response:
+    global PROMISE
+    global RESPONSE
+    
+    while not PROMISE:
+        continue
+    PROMISE = False
+
+    if RESPONSE:
         print(success_message)
     else:
         print('Error: Handle or alias not found.')
@@ -169,8 +192,16 @@ def send_handle():
     message = INPSPLIT[2]
     success_message = f'[To {INPSPLIT[1]}] : {message}'
     tempDict = {"command":"msg", "handle":INPSPLIT[1], "message":message} 
-    response = sendJSON(tempDict)   
-    if response:
+    sendJSON(tempDict)  
+
+    global PROMISE
+    global RESPONSE
+    
+    while not PROMISE:
+        continue
+    PROMISE = False
+
+    if RESPONSE:
         print(success_message)
 
 
@@ -196,15 +227,16 @@ def help():
 import threading
 def receive_messages():
     while True:
-        if THREAD:
-            data = CLIENTSOCKET.recvfrom(1024)
-            data = json.loads(data[0].decode())
+        data = CLIENTSOCKET.recvfrom(1024)
+        data = json.loads(data[0].decode())
 
-            if data.get('command') == 'message':
-                # {message: message, sender: handle}
-                message = data.get('message')
-                sender = data.get('sender')
-                print(f'[From {sender}] : {message}')
+        if data.get('command') == 'message':
+            # {message: message, sender: handle}
+            message = data.get('message')
+            sender = data.get('sender')
+            print(f'[From {sender}] : {message}')
+        global PROMISE
+        PROMISE = True
 
 
 receive_thread = threading.Thread(target=receive_messages)
@@ -244,9 +276,13 @@ while True:
     elif INPSPLIT[0] == '/msg':
         send_handle()
 
-
     elif INPSPLIT[0] == '/?':
         help()
+    else:
+        if INPSPLIT[0][0] == '/':
+            print('Error: No command was found.')
+        else:
+            print('Error: Invalid command.')
     # -----------AFTER 'SWITCH CASE'----------------------
     
 
