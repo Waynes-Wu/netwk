@@ -18,8 +18,8 @@ def sendJSON(dictionary):
     json_str = json.dumps(dictionary)
     CLIENTSOCKET.sendto(json_str.encode(), serverAddressPort)
 
-    response = CLIENTSOCKET.recv(1024).decode()
-    return response
+    # response = CLIENTSOCKET.recv(1024).decode()
+    # return response
 
 def askCommand():
     a = input('>>> ')
@@ -47,7 +47,6 @@ def join():
     
     response = sendJSON(tempDict)
     return
-
 
 def leave():
     success_message = 'Connection closed. Thank you!'
@@ -93,6 +92,14 @@ def help():
         /?
 ''')
 
+import threading
+def receive_messages():
+    while True:
+        data = CLIENTSOCKET.recvfrom(1024)
+        print(data[0].decode())
+
+receive_thread = threading.Thread(target=receive_messages)
+
 
 welcome()
 
@@ -117,6 +124,8 @@ while True:
     tempDict = {}
     if INPSPLIT[0] == '/join':
         join()
+        receive_thread.start()
+        
 
     elif INPSPLIT[0] == '/leave':
         leave()
