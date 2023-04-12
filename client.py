@@ -70,7 +70,7 @@ def join():
 # ! -- leave
 def leave():
 
-    if len(INPSPLIT > 1):
+    if len(INPSPLIT) > 1:
         print('Error: Command parameters do not match or is not allowed.')
         return
 
