@@ -69,11 +69,11 @@ def join():
 
 # ! -- leave
 def leave():
-
+    global serverAddressPort 
     if len(INPSPLIT) > 1:
         print('Error: Command parameters do not match or is not allowed.')
         return
-
+    
     # ? CONNECTED
     if serverAddressPort == None:
         print('Error: Disconnection failed. Please connect to the server first.')
@@ -90,8 +90,9 @@ def leave():
 
 # ! -- register
 def register():
-
+    global serverAddressPort 
     global HANDLE
+
     try:
         HANDLE = INPSPLIT[1]
     except:
@@ -117,7 +118,7 @@ def register():
 
 # ! -- send all
 def send_all():
-
+    global serverAddressPort 
     message = INPSPLIT[1]
 
     # ? CONNECTED
@@ -143,7 +144,7 @@ def send_all():
 
 # ! -- send to handle
 def send_handle():
-
+    global serverAddressPort 
     # ? CONNECTED
     if serverAddressPort == None:
         print('Error: Disconnection failed. Please connect to the server first.')
