@@ -45,6 +45,9 @@ def join():
     success_message = 'Connection to the Message Board Server is successful!'
     tempDict = {"command":"join"}
 
+    if len(INPSPLIT) != 3:
+        print('Error: Command parameters do not match or is not allowed.')
+        return
     global serverAddressPort 
 
     try:
@@ -70,7 +73,7 @@ def join():
 # ! -- leave
 def leave():
     global serverAddressPort 
-    if len(INPSPLIT) > 1:
+    if len(INPSPLIT) != 1:
         print('Error: Command parameters do not match or is not allowed.')
         return
     
@@ -93,9 +96,7 @@ def register():
     global serverAddressPort 
     global HANDLE
 
-    try:
-        HANDLE = INPSPLIT[1]
-    except:
+    if len(INPSPLIT) != 2:
         print('Error: Command parameters do not match or is not allowed.')
         return
     
@@ -104,6 +105,7 @@ def register():
         print('Error: Disconnection failed. Please connect to the server first.')
         return
 
+    HANDLE = INPSPLIT[1]
     tempDict = {"command":"register", "handle": HANDLE}
     success_message = f'Welcome {HANDLE}!'
 
@@ -121,6 +123,10 @@ def send_all():
     global serverAddressPort 
     message = INPSPLIT[1]
 
+    if len(INPSPLIT) != 2:
+        print('Error: Command parameters do not match or is not allowed.')
+        return
+    
     # ? CONNECTED
     if serverAddressPort == None:
         print('Error: Please connect to the server first.')
@@ -144,6 +150,11 @@ def send_all():
 
 # ! -- send to handle
 def send_handle():
+
+    if len(INPSPLIT) != 3:
+        print('Error: Command parameters do not match or is not allowed.')
+        return
+    
     global serverAddressPort 
     # ? CONNECTED
     if serverAddressPort == None:
