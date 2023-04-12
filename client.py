@@ -46,7 +46,7 @@ def join():
     tempDict = {"command":"join"}
 
     global serverAddressPort 
-    
+
     try:
         serverAddressPort= (INPSPLIT[1], int(INPSPLIT[2]))
     except:
@@ -90,14 +90,28 @@ def register():
         print('Error: Disconnection failed. Please connect to the server first.')
         return
     
-    global USERHANDLE
-    USERHANDLE = INPSPLIT[1]
-    success_message = f'Welcome {USERHANDLE}!'
-    tempDict = {"command":"register", "handle": INPSPLIT[1]}
+    global HANDLE
+    
+    tempDict = {}
+    try:
+        tempDict = {"command":"register", "handle": HANDLE}
+        HANDLE = INPSPLIT[1]
+        success_message = f'Welcome {HANDLE}!'
+    except:
+        print('Error: Command parameters do not match or is not allowed.')
+
+    response = sendJSON(tempDict)
+    if response:
+        print(success_message)
+    else: 
+        print('Error: Registration failed. Handle or alias already exists.')
+
     return
 
 # ! -- send all
 def send_all():
+
+    message = INPSPLIT[1]
 
     # ? CONNECTED
     if serverAddressPort == None:
@@ -109,11 +123,13 @@ def send_all():
         print('Error: Please register before sending a message.')
         return
 
-    # success_message = f'{handle}: {message}'
+    success_message = f'{HANDLE}: {message}'
     tempDict = {"command":"all", "message": INPSPLIT[1]}
     response = sendJSON(tempDict)   
 
     if response:
+        print(success_message)
+    else:
         print('Error: Handle or alias not found.')
 
 
@@ -126,10 +142,18 @@ def send_handle():
         print('Error: Disconnection failed. Please connect to the server first.')
         return
     
-    # success_message = f'[To {receiver}] : {message}'
-    tempDict = {"command":"msg", "handle":INPSPLIT[1], "message":INPSPLIT[2]} 
+    # ? not registered
+    if HANDLE == '':
+        print('Error: Please register before sending a message.')
+        return
+    
+    message = INPSPLIT[2]
+    success_message = f'[To {INPSPLIT[1]}] : {message}'
+    tempDict = {"command":"msg", "handle":INPSPLIT[1], "message":message} 
     response = sendJSON(tempDict)   
- 
+    if response:
+        print(success_message)
+
 
 # !-- help
 def help():
@@ -161,7 +185,7 @@ def receive_messages():
                 # {message: message, sender: handle}
                 message = data.get('message')
                 sender = data.get('sender')
-                print(f'from {sender}: {message}')
+                print(f'[From {sender}] : {message}')
 
 
 receive_thread = threading.Thread(target=receive_messages)
