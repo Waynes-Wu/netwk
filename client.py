@@ -39,16 +39,24 @@ def welcome():
     print()
     print('type \'/?\' for list of commands')
 
+# ! -- join
 def join():
     """/join <server_ip_add> <port>"""
     success_message = 'Connection to the Message Board Server is successful!'
     tempDict = {"command":"join"}
 
     global serverAddressPort 
-    serverAddressPort= (INPSPLIT[1], int(INPSPLIT[2]))
+    
+    try:
+        serverAddressPort= (INPSPLIT[1], int(INPSPLIT[2]))
+    except:
+        print('Error: Command parameters do not match or is not allowed.')
+
+
     try:
         CLIENTSOCKET.connect(serverAddressPort)
     except Exception as e:
+        serverAddressPort = None
         print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
     
     response = sendJSON(tempDict)
@@ -58,32 +66,72 @@ def join():
 
     return
 
+# ! -- leave
 def leave():
+
+    # ? CONNECTED
+    if serverAddressPort == None:
+        print('Error: Disconnection failed. Please connect to the server first.')
+        return
+
     success_message = 'Connection closed. Thank you!'
     tempDict = {"command":"leave"}
 
     response = sendJSON(tempDict)
-    CLIENTSOCKET.close()
-    print(success_message)
+    if response:
+        serverAddressPort = None
+        print(success_message)
     return
 
+# ! -- register
 def register():
+    # ? CONNECTED
+    if serverAddressPort == None:
+        print('Error: Disconnection failed. Please connect to the server first.')
+        return
+    
     global USERHANDLE
     USERHANDLE = INPSPLIT[1]
     success_message = f'Welcome {USERHANDLE}!'
     tempDict = {"command":"register", "handle": INPSPLIT[1]}
     return
 
+# ! -- send all
 def send_all():
+
+    # ? CONNECTED
+    if serverAddressPort == None:
+        print('Error: Please connect to the server first.')
+        return
+    
+    # ? not registered
+    if HANDLE == '':
+        print('Error: Please register before sending a message.')
+        return
+
     # success_message = f'{handle}: {message}'
     tempDict = {"command":"all", "message": INPSPLIT[1]}
-    pass
+    response = sendJSON(tempDict)   
 
+    if response:
+        print('Error: Handle or alias not found.')
+
+
+
+# ! -- send to handle
 def send_handle():
-    # success_message = f'[To {receiver}] : {message}'
-    tempDict = {"command":"msg", "handle":INPSPLIT[1], "message":INPSPLIT[2]}    
-    pass
 
+    # ? CONNECTED
+    if serverAddressPort == None:
+        print('Error: Disconnection failed. Please connect to the server first.')
+        return
+    
+    # success_message = f'[To {receiver}] : {message}'
+    tempDict = {"command":"msg", "handle":INPSPLIT[1], "message":INPSPLIT[2]} 
+    response = sendJSON(tempDict)   
+ 
+
+# !-- help
 def help():
     print(
 '''
@@ -122,12 +170,6 @@ receive_thread = threading.Thread(target=receive_messages)
 welcome()
 
 
-# # ! DEBUG
-# serverAddressPort = ('localhost', 2000)
-# CLIENTSOCKET.connect(serverAddressPort)
-# tempDict = {"command":"join"}
-# sendJSON(tempDict)
-
 
 
 while True:
@@ -144,6 +186,8 @@ while True:
         join()
         receive_thread.start()
         
+
+# * NEEDS TO BE CONNECTED
 
     elif INPSPLIT[0] == '/leave':
         leave()

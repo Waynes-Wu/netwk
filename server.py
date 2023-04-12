@@ -9,8 +9,6 @@ bufferSize = 1024
 msgFromServer = "Hello UDP Client"
 
 
-# Create a datagram socket
-
 SERVERSOCKET = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 SERVERSOCKET.bind(serverAddressPort)
 
@@ -19,24 +17,11 @@ def sendJSON(dictionary):
     json_str = json.dumps(dictionary)
     SERVERSOCKET.sendto(json_str.encode(), serverAddressPort)
 
-
 print("UDP server up and listening")
 print(f'opening a server in {serverAddressPort}')
 
-
-# Listen for incoming datagrams
 clients = {}
 while (True):
-
-    # LIST OF COMMANDS
-    # 	join, leave 					--(no need send command?)
-    #   register, send all, send priv	--(expect to receive these)
-    # message_received = SERVERSOCKET.recvfrom(bufferSize)
-    # message_received
-
-    # what i think will happen join means add the address to list
-    # leave means remove from list
-    # maybe save a list of dictionary for the addresses or at least another dictionary for name and addresses
 
     success = False
 
@@ -60,23 +45,28 @@ while (True):
     # ! -- leave
     if command == 'leave':
         del (clients[port])
+        success = True
 
 
     # ! -- register
     if command == 'register':
         newHandle = commandingMsg.get('handle')
 
-        try:
+        # false by default
+
+        if clients.get(port) is not None and newHandle != None:
             clients[port] = newHandle
-            success = False
-        except:
-            success = False
+            success = True
 
     # ! -- send all
     if command == 'all':
         message = commandingMsg.get('message')
-        for key in clients.keys():
-            SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", key))
+        try:
+            for key in clients.keys():
+                SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", key))
+            success = True
+        except:
+            success = False
 
     # ! -- send to handle
     if command == 'msg':
