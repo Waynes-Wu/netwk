@@ -51,6 +51,7 @@ def join():
         serverAddressPort= (INPSPLIT[1], int(INPSPLIT[2]))
     except:
         print('Error: Command parameters do not match or is not allowed.')
+        return
 
 
     try:
@@ -69,6 +70,10 @@ def join():
 # ! -- leave
 def leave():
 
+    if len(INPSPLIT > 1):
+        print('Error: Command parameters do not match or is not allowed.')
+        return
+
     # ? CONNECTED
     if serverAddressPort == None:
         print('Error: Disconnection failed. Please connect to the server first.')
@@ -85,20 +90,22 @@ def leave():
 
 # ! -- register
 def register():
+
+    global HANDLE
+    try:
+        HANDLE = INPSPLIT[1]
+    except:
+        print('Error: Command parameters do not match or is not allowed.')
+        return
+    
     # ? CONNECTED
     if serverAddressPort == None:
         print('Error: Disconnection failed. Please connect to the server first.')
         return
-    
-    global HANDLE
-    
-    tempDict = {}
-    try:
-        tempDict = {"command":"register", "handle": HANDLE}
-        HANDLE = INPSPLIT[1]
-        success_message = f'Welcome {HANDLE}!'
-    except:
-        print('Error: Command parameters do not match or is not allowed.')
+
+    tempDict = {"command":"register", "handle": HANDLE}
+    success_message = f'Welcome {HANDLE}!'
+
 
     response = sendJSON(tempDict)
     if response:
@@ -202,7 +209,7 @@ while True:
     USERINPUT = askCommand()
     INPSPLIT = USERINPUT.split()
 
-    # clear()
+    print('---------')
 
     # --------------'SWITCH CASE'--------------------------
     tempDict = {}
