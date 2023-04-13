@@ -50,22 +50,30 @@ while (True):
         newHandle = cmdDict.get('handle')
 
         # conditions here is if it's not taken
-        if clients.get(port) == '':
-            clients[port] = newHandle
-            statusReturn['message'] = f'Welcome {newHandle}!'
+
+        if newHandle in clients.values():
+            # means taken
+            statusReturn['message'] = f'Error: Registration failed. Handle or alias already exists.'
+            SERVERSOCKET.sendto(statusReturn.encode(), address)
+            continue
+
+        clients[port] = newHandle
+        statusReturn['message'] = f'Welcome {newHandle}!'
 
     # ! -- send all  --------------
     if command == 'all':
         message = cmdDict.get('message')
         sender = clients.get(port)
 
+        print(clients.keys())
         message = f'{sender} : {message}'
 
         for key in clients.keys():
             if key == port:
                 continue
-            SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", key))
-            statusReturn['message'] = f'[To all] : {message}'
+            recipient_addr = ("127.0.0.1", key) 
+            SERVERSOCKET.sendto(message.encode(), recipient_addr)
+        statusReturn['message'] = f'[To all] : {message}'
 
 
     # ! -- send to handle
@@ -80,7 +88,7 @@ while (True):
                 message = f'[From {sender} : {message}]'
 
                 try:
-                    SERVERSOCKET.sendto(message.encode(), ("127.0.0.1", "127.0.0.1", key))
+                    SERVERSOCKET.sendto(message.encode(), ("127.0.0.1",  key))
                     sent = True
                 except:
                     pass

@@ -9,10 +9,11 @@ receive_thread = None
 # ! ----------------WRAPPERS----------------------------
 def connection_req(func):
     def wrapper(*args, **kwargs):
+        global sock
         if sock.getsockname() == ('0.0.0.0', 0):
             print('Error: Please connect to the server first.')
             return
-        return func
+        return func(*args, **kwargs)
     return wrapper
 
 def register_req(func):
@@ -37,12 +38,12 @@ def check_args(n):
 def receive_messages(sock):
     """Function to receive messages from the server."""
     while True:
-        # try:
-        message = sock.recv(1024).decode()
-        print(json.loads(message))
-        # except:
-        #     sock.close()
-        #     break
+        try:
+            message = sock.recv(1024).decode()
+            print(json.loads(message))
+        except:
+            sock.close()
+            break
 # ! ----------------------------------------------------
 def type_commands(sock):
     
@@ -55,6 +56,7 @@ def type_commands(sock):
         if command[0] != '/':
             print('Error: Invalid command.')
             continue
+        print('another loop')
 
         if command == '/join':
             join(newinp)
@@ -94,30 +96,26 @@ def welcome():
 
 @check_args(3)
 def join(inp):
-    # global serverAddressPort, sock
-    # serverAddressPort= (inp[1], int(inp[2]))
+    global serverAddressPort, sock
+    serverAddressPort= (inp[1], int(inp[2]))
     # print(serverAddressPort, sock)
 
-    # try:
-    #     sock.connect(serverAddressPort)
-    # except:
-    #     print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
-    #     return
-    server_address = ("127.0.0.1", 2000)
-
-        # connect to the server
-    sock.connect(server_address)
-    print('Connected to', server_address)
-
+    try:
+        sock.connect(serverAddressPort)
+        receive_thread.start()
+    except:
+        print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
+        return
 
     print('Connection to the Message Board Server is successful!')
     tempDict = {"command":"join"}
+    
     sendJSON(tempDict)
 
 @check_args(1)
 @connection_req
 def leave(inp):
-    # print('Connection closed. Thank you!')
+    print('Connection closed. Thank you!')
     tempDict = {"command":"leave"}
     sendJSON(tempDict)
 
@@ -166,5 +164,5 @@ def help():
 # ! -----------------CODE STARTS HERE---------------------
 welcome()
 
-receive_thread.start()
 send_thread.start()
+# receive_thread.start()
